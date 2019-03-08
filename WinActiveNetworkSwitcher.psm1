@@ -1,9 +1,10 @@
     <#
 .SYNOPSIS
-    Module to automate the switching of network connections to ensure only one network is connected at a time.
+    Module to automate the switching of network connection states automatically and look to have certain adapters disabled when other adapters are connected.
 .DESCRIPTION
-    This module can be used in automation or deployed with device running Windows 8 or later.
-    Facilitating cleaner network switching when roaming between Ethernet and WiFi, on and off corporate networks and to better control the security of endpoints on the network.
+    Can be used in automation or deployed to devices running Windows 8 or later. This module will not work Windows 7 or Earlier (regardless of PS version) due to Get-NetAdapter limitations.  
+    Facilitating cleaner network switching when roaming between Ethernet and WiFi, on and off corporate networks and to better control the security of endpoints on the network.  
+    It is intended for this script to be used in a scheduled task and triggered by network state change event log.
 .EXAMPLE
     TODO:
     PS C:\> <example usage>
