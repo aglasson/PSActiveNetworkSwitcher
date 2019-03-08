@@ -3,7 +3,7 @@
 Powershell Module to automate the switching of network connection states automatically and look to have certain adapters disabled when other adapters are connected.  
 Can be used in automation or deployed to devices running Windows 8 or later. This module will not work Windows 7 or Earlier (regardless of PS version) due to Get-NetAdapter limitations.  
 Facilitating cleaner network switching when roaming between Ethernet and WiFi, on and off corporate networks and to better control the security of endpoints on the network.  
-It is intended for this script to be used in a scheduled task and triggered by network state change event log. Ideally it will also have some minor deployment functionality for self-provisioning  its scheduled task.
+It is intended for this script to be used in a scheduled task and triggered by network state change event log. Ideally it will also have some minor deployment functionality for self-provisioning its scheduled task.
 
 ## Features
 * Enable/disable wireless & other ethernet based on ethernet adapter state
