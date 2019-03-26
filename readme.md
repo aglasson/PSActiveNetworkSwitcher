@@ -1,4 +1,5 @@
 # WinActiveNetworkSwitcher 
+https://github.com/aglasson/WinActiveNetworkSwitcher
 
 Powershell Module to automate the switching of network connection states by having certain adapters disabled when other adapters are connected.  
 Can be used in automation or deployed to devices running Windows 8 or later. This module will not work Windows 7 or Earlier (regardless of PS version) due to Get-NetAdapter limitations.  
