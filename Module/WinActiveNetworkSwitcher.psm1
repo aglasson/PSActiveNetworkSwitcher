@@ -19,6 +19,46 @@
 #>
 
 #---- General Functions ----#
+Function Write-Log
+{
+    Param(
+        [Parameter(Mandatory=$True,Position=0)]
+        [string]$LogMessage
+    )
+
+    # Actual function to write append logfile entries
+    # Files will be appended with datestamp - essentially rolling daily
+    Function Write-LogEntry
+    {
+        Param(
+            [string]$LogPath,
+            [string]$LogFileBase,
+            [string]$LogContent
+        )
+    
+        # if either LogPath or LogFileBase come in empy determine values from current location and script name.
+        if (!$LogPath)
+        {
+            $LogPath = "$(Split-Path $PSCommandPath -Parent)\Logs\"
+        }
+        if (!$LogFileBase)
+        {
+            $LogFileBase = $(Get-ChildItem $PSCommandPath).Name.Replace(".ps1","")
+        }    
+    
+        # If required log path does not exist create it
+        if(!(Test-Path $LogPath))
+        {
+            New-Item $LogPath -ItemType Directory -Force
+        }
+        
+        # Write line to logfile prepending the line with date and time 
+        Add-Content -Path "$LogPath$LogFileBase`_$(Get-Date -Format "yyyy-MM-dd").log" -Value "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ms"): $LogContent"
+        
+    }
+    Write-LogEntry -LogPath $logPath -LogFileBase $logFileBase -LogContent $LogMessage
+}
+
 function Switch-WinActiveNetwork {
     [CmdletBinding()]
     Param(
@@ -27,6 +67,7 @@ function Switch-WinActiveNetwork {
         [switch]
         $AllowMultiEth
     )
+    Write-Log -LogMessage "Running 'Switch-WinActiveNetwork'"
     # Simple logic: IF ethernet connected THEN switch off wireless ELSE switch on wireless.
     # IF multiple, select the ethernet with lowest interface number.
 
@@ -36,32 +77,50 @@ function Switch-WinActiveNetwork {
 
     $WirelessAdapterList = $PhysicalAdapterList | Where-Object {$_.MediaType -in ("Native 802.11","Wireless WAN")}
 
-    $EthernetAdapterList = $PhysicalAdapterList | Where-Object {$_.MediaType -eq "802.3"}
+    $EthernetAdapterList = $PhysicalAdapterList | Where-Object { $_.MediaType -eq "802.3" -and $_.Name -notlike "*Loopback*" }
     
     $EthernetAdapterUpList = $EthernetAdapterList | Where-Object {$_.Status -eq "Up"}
     Write-Verbose ("Ethernet Adapater in 'Up' status: " + ($EthernetAdapterUpList | Measure-Object).Count)
 
-    if (($EthernetAdapterUpList | Measure-Object).Count -eq 1) {
+    if (($EthernetAdapterUpList | Measure-Object).Count -ge 1) {
+        
         if (($EthernetAdapterList.Count -gt 1) -and ($AllowMultiEth -eq $true)) {
-            Write-Verbose "-AllowMultiEth `$True, leaving other ethernet adapters enabled."
+            $Message = "-AllowMultiEth `$True, leaving other ethernet adapters enabled."
+            Write-Verbose $Message
+            Write-Log -LogMessage $Message
         }
+
         elseif (((($EthernetAdapterList | Measure-Object).Count) -gt 1) -and ($AllowMultiEth -eq $false)) {
+        
             $DisableEthernetList = $EthernetAdapterList | Where-Object {$_ -notin $EthernetAdapterUpList}
+
             Write-Verbose "-AllowMultiEth `$False, disabling other ethernet adapters: $($DisableEthernetList | Out-String)"
+            Write-Log -LogMessage "-AllowMultiEth `$False, disabling other ethernet adapters"
+
             $DisableEthernetList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
         }
+
         Write-Verbose "Disabling wireless net adapters. $($WirelessAdapterList | Out-String)"
+        Write-Log -LogMessage "Disabling wireless net adapters."
+
         $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
     }
     elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1) -and ($AllowMultiEth -eq $true)) {
+
         Write-Verbose "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
+        Write-Log -LogMessage "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
     }
     elseif ((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) {
+
         Write-Verbose "No up ethernet adapters identified, enabling wireless net adapters."
+        Write-Log -LogMessage "No up ethernet adapters identified, enabling wireless net adapters."
+
         $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Enable-NetAdapter -Confirm:$False}
     }
     else {
         Write-Verbose "Criteria not met, enabling all net adapters."
+        Write-Log -LogMessage "Criteria not met, enabling all net adapters."
+
         Get-NetAdapter | Enable-NetAdapter -Confirm:$False
     }
 }
