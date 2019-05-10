@@ -72,12 +72,14 @@ function Switch-WinActiveNetwork {
     # IF multiple, select the ethernet with lowest interface number.
 
     # Get network devices and their states
-    $PhysicalAdapterList = Get-NetAdapter -Physical | Select-Object Name, ifIndex, MediaType, Status
+    $PhysicalAdapterList = Get-NetAdapter -Physical | Select-Object Name, ifIndex, PhysicalMediaType, Status
     Write-Verbose "Output of {Get-NetAdapter -Physical} $($PhysicalAdapterList | Out-String)"
 
-    $WirelessAdapterList = $PhysicalAdapterList | Where-Object {$_.MediaType -in ("Native 802.11","Wireless WAN")}
+    $WirelessAdapterList = $PhysicalAdapterList | Where-Object {$_.PhysicalMediaType -in ("Native 802.11","Wireless WAN")}
 
-    $EthernetAdapterList = $PhysicalAdapterList | Where-Object { $_.MediaType -eq "802.3" -and $_.Name -notlike "*Loopback*" }
+    $WirelessAdapterUpList = $WirelessAdapterList | Where-Object {$_.Status -eq "Up"}
+    
+    $EthernetAdapterList = $PhysicalAdapterList | Where-Object {$_.PhysicalMediaType -eq "802.3"}
     
     $EthernetAdapterUpList = $EthernetAdapterList | Where-Object {$_.Status -eq "Up"}
     Write-Verbose ("Ethernet Adapater in 'Up' status: " + ($EthernetAdapterUpList | Measure-Object).Count)
