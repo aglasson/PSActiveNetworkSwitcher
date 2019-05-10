@@ -76,9 +76,9 @@ function Switch-WinActiveNetwork {
     Write-Verbose "Output of {Get-NetAdapter -Physical} $($PhysicalAdapterList | Out-String)"
 
     $WirelessAdapterList = $PhysicalAdapterList | Where-Object {$_.PhysicalMediaType -in ("Native 802.11","Wireless WAN")}
-
-    $WirelessAdapterUpList = $WirelessAdapterList | Where-Object {$_.Status -eq "Up"}
     
+    $WirelessAdapterUpList = $WirelessAdapterList | Where-Object {$_.Status -eq "Up"}
+
     $EthernetAdapterList = $PhysicalAdapterList | Where-Object {$_.PhysicalMediaType -eq "802.3"}
     
     $EthernetAdapterUpList = $EthernetAdapterList | Where-Object {$_.Status -eq "Up"}
@@ -91,18 +91,18 @@ function Switch-WinActiveNetwork {
         Write-Log -LogMessage "Disabling wireless net adapters."
 
         $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
-        }
+    }
     elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1) <# -and ($AllowMultiEth -eq $true) #>) {
         Write-Verbose "More than one 'Up' Ethernet Adapter Detected."
 
         if ($AllowMultiEth) {
             Write-Verbose "-AllowMultiEth `$True so disabling all but Ethernet adapters."
 
-        $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
-    }
+            $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
+        }
         else {
             Write-Verbose "-AllowMultiEth `$False so disabling all Wirless and 'Up' Ethernet except 'Up' Eth with lowest ifIndex number."
-
+            
             $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
             $EthernetMultiLowest = ($EthernetAdapterUpList | Measure-Object -Minimum -Property ifIndex).Minimum
             Write-Verbose "'Up' Eth with lowest ifIndex number $($EthernetAdapterUpList | Where-Object {$_.ifIndex -ne $EthernetMultiLowest})"
@@ -142,20 +142,33 @@ function Switch-WinActiveNetwork {
 }
 
 #---- Deploy Functions ----#
-# TODO:
 function Install-WinActiveNetwork {
+    [CmdletBinding()]
     param (
-        # The path to store the script and module that will be run by the scheduled task
+        # The path to the module files that will be copied to the task schedule runner location
         [Parameter( Mandatory=$true,
-                    HelpMessage="Path to a single location for scheduled task to run script.")]
+                    HelpMessage="to the module files that will be copied to the task schedule runner location.")]
         [Alias("PSPath")]
+        [ValidateScript({Test-Path ((Get-ChildItem -Path $_) | Where-Object {$_.Name -eq "SidelineScripts"}).FullName})]
         [string]
-        $Path
+        $Path,
+        # The path to the task schedule runner location
+        [Parameter( Mandatory=$false,
+                    HelpMessage="Path to a single location for scheduled task to run script.")]
+        [string]
+        $Destination = "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher"
+        # TODO:
+        # ^ This is currently the only supported destination within the Task Schedular config that gets imported.
     )
     
-    <# TODO:
-    - Deploy runner script and module to specified path
-    - Create scheduled task
-    #>
+    if (!(Test-Path $Destination)) {
+        New-Item -Path $Destination -ItemType Directory
+    }
+
+    Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force
+
+    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\WinActiveNetworkSwitcher Event Runner.xml')`" /tn `"WinActiveNetworkSwitcher Event Runner`" /ru SYSTEM"
+    Write-Host $Command
+    cmd.exe /c $Command
     
 }

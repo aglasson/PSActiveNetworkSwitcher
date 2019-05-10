@@ -8,6 +8,7 @@ Facilitating cleaner network switching when roaming between Ethernet and WiFi, o
 ## Features
 * Enable/disable wireless & other ethernet based on ethernet adapter state
 * Allow or deny multiple ethernet adapter being enable/connected at once
+* Self deploy script runner and scheduled tasks to monitor event log for network changes and re-run the switcher
 
 ## Installation
 #### Manual Import Method
@@ -38,8 +39,11 @@ Order of priority in which if one is in the 'Up' state the others can not be. Wh
 3. Wireless WAN (Mobile Broadband/Cellular)
 
 ## Intended Features
-* Self deploy script runner and scheduled tasks to monitor event log for network changes and re-run the switcher
+#### Major Features
 * Allow or deny VPN adapters
 * Own organisation network identify - To facilitate for example, no VPNs or dual adapters allowed when in the office but VPNs allowed when working from home.
 * Availability on the Powershell Gallery
 * Mac OSX and Linux Support - **May not be possible and needs investigation**
+
+#### Minor Features
+* Support alternate destinations in 'Install-WinActiveNetwork' and replacement of path in task schedule XML file

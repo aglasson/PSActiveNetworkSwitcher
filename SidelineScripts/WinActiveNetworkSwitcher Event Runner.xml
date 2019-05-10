@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Date>2019-03-26T12:12:06.4122692</Date>
     <URI>\WinActiveNetworkSwitcher Event Runner</URI>
   </RegistrationInfo>
   <Triggers>
@@ -12,12 +11,12 @@
   </Triggers>
   <Principals>
     <Principal id="Author">
-      <UserId>S-1-5-19</UserId>
-      <RunLevel>HighestAvailable</RunLevel>
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>LeastPrivilege</RunLevel>
     </Principal>
   </Principals>
   <Settings>
-    <MultipleInstancesPolicy>Queue</MultipleInstancesPolicy>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
     <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
     <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
     <AllowHardTerminate>true</AllowHardTerminate>
