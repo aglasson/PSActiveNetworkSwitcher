@@ -84,40 +84,54 @@ function Switch-WinActiveNetwork {
     $EthernetAdapterUpList = $EthernetAdapterList | Where-Object {$_.Status -eq "Up"}
     Write-Verbose ("Ethernet Adapater in 'Up' status: " + ($EthernetAdapterUpList | Measure-Object).Count)
 
-    if (($EthernetAdapterUpList | Measure-Object).Count -ge 1) {
+    if (($EthernetAdapterUpList | Measure-Object).Count -eq 1) {
         
-        if (($EthernetAdapterList.Count -gt 1) -and ($AllowMultiEth -eq $true)) {
-            $Message = "-AllowMultiEth `$True, leaving other ethernet adapters enabled."
-            Write-Verbose $Message
-            Write-Log -LogMessage $Message
-        }
-
-        elseif (((($EthernetAdapterList | Measure-Object).Count) -gt 1) -and ($AllowMultiEth -eq $false)) {
-        
-            $DisableEthernetList = $EthernetAdapterList | Where-Object {$_ -notin $EthernetAdapterUpList}
-
-            Write-Verbose "-AllowMultiEth `$False, disabling other ethernet adapters: $($DisableEthernetList | Out-String)"
-            Write-Log -LogMessage "-AllowMultiEth `$False, disabling other ethernet adapters"
-
-            $DisableEthernetList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
-        }
-
+        Write-Verbose "Single 'Up' Ethernet Adapter Detected."
         Write-Verbose "Disabling wireless net adapters. $($WirelessAdapterList | Out-String)"
         Write-Log -LogMessage "Disabling wireless net adapters."
 
         $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
-    }
-    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1) -and ($AllowMultiEth -eq $true)) {
+        }
+    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1) <# -and ($AllowMultiEth -eq $true) #>) {
+        Write-Verbose "More than one 'Up' Ethernet Adapter Detected."
 
+        if ($AllowMultiEth) {
+            Write-Verbose "-AllowMultiEth `$True so disabling all but Ethernet adapters."
+
+        $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
+    }
+        else {
+            Write-Verbose "-AllowMultiEth `$False so disabling all Wirless and 'Up' Ethernet except 'Up' Eth with lowest ifIndex number."
+
+            $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
+            $EthernetMultiLowest = ($EthernetAdapterUpList | Measure-Object -Minimum -Property ifIndex).Minimum
+            Write-Verbose "'Up' Eth with lowest ifIndex number $($EthernetAdapterUpList | Where-Object {$_.ifIndex -ne $EthernetMultiLowest})"
+            $EthernetAdapterUpList | Where-Object {$_.ifIndex -ne $EthernetMultiLowest} | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
+        }
         Write-Verbose "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
         Write-Log -LogMessage "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
     }
-    elseif ((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) {
+    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) -and (($WirelessAdapterList.Status -eq "Up" | Measure-Object).Count -gt 0)) {
 
-        Write-Verbose "No up ethernet adapters identified, enabling wireless net adapters."
-        Write-Log -LogMessage "No up ethernet adapters identified, enabling wireless net adapters."
+        Write-Verbose "No 'up' ethernet adapters identified, at least one 'up' wireless adapter."
 
-        $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Enable-NetAdapter -Confirm:$False}
+        if ((($WirelessAdapterUpList | Measure-Object).Count) -ge 2) {
+            # Write-Verbose "At least 2 'up' wireless adapters identified so disabling all 'Up' Wirless except 'Up' Wireless LAN with lowest ifIndex number."
+
+            if ((($WirelessAdapterUpList | Where-Object {$_.PhysicalMediaType -eq "Native 802.11"} | Measure-Object).Count) -eq 1) {
+                Write-Verbose "Only 1 'up' Wireless LAN adapters identified so disabling Wireless WAN adapters only."
+                $WirelessAdapterUpList | Where-Object {$_.PhysicalMediaType -eq "Wireless WAN"} | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
+            }
+            else {
+                Write-Verbose "More than 1 'up' Wireless LAN adapters identified so disabling Wireless WAN and Wireless LAN except with lowest ifIndex number."
+                $WirelessLANMultiLowest = ($WirelessAdapterUpList | Where-Object {$_.PhysicalMediaType -eq "Native 802.11"} | Measure-Object -Minimum -Property ifIndex).Minimum
+                $WirelessAdapterUpList | Where-Object {$_.ifIndex -ne $WirelessLANMultiLowest} | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
+            }
+        }
+        else {
+            Write-Verbose "Only one 'up' wireless adapter identified, no action required."
+            # exit
+        }
     }
     else {
         Write-Verbose "Criteria not met, enabling all net adapters."
