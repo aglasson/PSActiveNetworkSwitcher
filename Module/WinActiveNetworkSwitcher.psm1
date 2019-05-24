@@ -72,7 +72,7 @@ function Switch-WinActiveNetwork {
     # IF multiple, select the ethernet with lowest interface number.
 
     # Get network devices and their states
-    $PhysicalAdapterList = Get-NetAdapter -Physical | Select-Object Name, ifIndex, PhysicalMediaType, Status
+    $PhysicalAdapterList = Get-NetAdapter -Physical | Where-Object {$_.PhysicalMediaType -ne "Unspecified"} | Select-Object Name, ifIndex, PhysicalMediaType, Status
     Write-Verbose "Output of {Get-NetAdapter -Physical} $($PhysicalAdapterList | Out-String)"
 
     $WirelessAdapterList = $PhysicalAdapterList | Where-Object {$_.PhysicalMediaType -in ("Native 802.11","Wireless WAN")}
@@ -111,7 +111,7 @@ function Switch-WinActiveNetwork {
         Write-Verbose "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
         Write-Log -LogMessage "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
     }
-    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) -and (($WirelessAdapterList.Status -eq "Up" | Measure-Object).Count -gt 0)) {
+    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) -and (($WirelessAdapterUpList | Measure-Object).Count -gt 0)) {
 
         Write-Verbose "No 'up' ethernet adapters identified, at least one 'up' wireless adapter."
 
