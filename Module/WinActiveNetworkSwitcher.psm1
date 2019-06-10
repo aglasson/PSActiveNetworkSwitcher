@@ -43,8 +43,14 @@ Function Write-Log
         }
         if (!$LogFileBase)
         {
-            $LogFileBase = $(Get-ChildItem $PSCommandPath).Name.Replace(".ps1","")
+            $LogFileBase = (Get-ChildItem $PSCommandPath).BaseName
         }    
+    
+        $LogFilePath = (Join-Path -Path $LogPath -ChildPath ($LogFileBase + "_" + $(Get-Date -Format "yyyy-MM-dd") + ".log"))
+
+        Write-Verbose "LogPath determined as `'$LogPath`'"
+        Write-Verbose "LogFileBase determined as `'$LogFileBase`'"
+        Write-Verbose "LogFile determined as `'$LogFilePath`'"
     
         # If required log path does not exist create it
         if(!(Test-Path $LogPath))
@@ -53,8 +59,7 @@ Function Write-Log
         }
         
         # Write line to logfile prepending the line with date and time 
-        Add-Content -Path "$LogPath$LogFileBase`_$(Get-Date -Format "yyyy-MM-dd").log" -Value "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ms"): $LogContent"
-        
+        Add-Content -Path $LogFilePath -Value "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ms"): $LogContent"  
     }
     Write-LogEntry -LogPath $logPath -LogFileBase $logFileBase -LogContent $LogMessage
 }
