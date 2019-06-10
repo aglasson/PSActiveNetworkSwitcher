@@ -27,7 +27,7 @@ Function Write-Log
     )
 
     # Actual function to write append logfile entries
-    # Files will be appended with datestamp - essentially rolling daily
+    # Files will be appended with date stamp - essentially rolling daily
     Function Write-LogEntry
     {
         Param(
@@ -36,7 +36,7 @@ Function Write-Log
             [string]$LogContent
         )
     
-        # if either LogPath or LogFileBase come in empy determine values from current location and script name.
+        # if either LogPath or LogFileBase come in empty determine values from current location and script name.
         if (!$LogPath)
         {
             $LogPath = "$(Split-Path $PSCommandPath -Parent)\Logs\"
@@ -92,7 +92,7 @@ function Switch-WinActiveNetwork {
 
         $WirelessAdapterList | ForEach-Object {Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False}
     }
-    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1) <# -and ($AllowMultiEth -eq $true) #>) {
+    elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1)) {
         Write-Verbose "More than one 'Up' Ethernet Adapter Detected."
 
         if ($AllowMultiEth) {
@@ -116,7 +116,6 @@ function Switch-WinActiveNetwork {
         Write-Verbose "No 'up' ethernet adapters identified, at least one 'up' wireless adapter."
 
         if ((($WirelessAdapterUpList | Measure-Object).Count) -ge 2) {
-            # Write-Verbose "At least 2 'up' wireless adapters identified so disabling all 'Up' Wirless except 'Up' Wireless LAN with lowest ifIndex number."
 
             if ((($WirelessAdapterUpList | Where-Object {$_.PhysicalMediaType -eq "Native 802.11"} | Measure-Object).Count) -eq 1) {
                 Write-Verbose "Only 1 'up' Wireless LAN adapters identified so disabling Wireless WAN adapters only."
@@ -158,7 +157,7 @@ function Install-WinActiveNetwork {
         [string]
         $Destination = "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher"
         # TODO:
-        # ^ This is currently the only supported destination within the Task Schedular config that gets imported.
+        # ^ This is currently the only supported destination within the Task Scheduler config that gets imported.
     )
     
     if (!(Test-Path $Destination)) {
