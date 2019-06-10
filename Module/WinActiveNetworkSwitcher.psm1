@@ -32,6 +32,8 @@ function Switch-WinActiveNetwork {
     # Simple logic: IF ethernet connected THEN switch off wireless ELSE switch on wireless.
     # IF multiple, select the ethernet with lowest interface number.
     
+    $PerfMetricsStart = Get-Date
+
     # Get network devices and their states
     $PhysicalAdapterList = Get-NetAdapter -Physical | Where-Object {$_.PhysicalMediaType -ne "Unspecified"} | Select-Object Name, ifIndex, PhysicalMediaType, Status
     Write-Verbose "Output of {Get-NetAdapter -Physical} $($PhysicalAdapterList | Out-String)"
@@ -96,6 +98,8 @@ function Switch-WinActiveNetwork {
         
         Get-NetAdapter | Enable-NetAdapter -Confirm:$False
     }
+    $TimeSpan = "{0:g}" -f (New-TimeSpan -Start $PerfMetricsStart -End (Get-Date))
+    Write-Log "Switch network time to run: $TimeSpan"
 }
 
 #---- Deploy Functions ----#
