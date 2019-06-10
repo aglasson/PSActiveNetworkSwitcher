@@ -47,3 +47,4 @@ Order of priority in which if one is in the 'Up' state the others can not be. Wh
 
 #### Minor Features
 * Support alternate destinations in 'Install-WinActiveNetwork' and replacement of path in task schedule XML file
+* Respond appropriately to Airplane mode
