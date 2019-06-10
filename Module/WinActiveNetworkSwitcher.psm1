@@ -171,8 +171,16 @@ function Install-WinActiveNetwork {
 
     Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force
 
-    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\WinActiveNetworkSwitcher Event Runner.xml')`" /tn `"WinActiveNetworkSwitcher Event Runner`" /ru SYSTEM"
-    Write-Host $Command
-    cmd.exe /c $Command
+    # Create/replace scheduled task.
+    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\WinActiveNetworkSwitcher Event Runner.xml')`" /tn `"WinActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
+    Write-Verbose "Running create scheduled task (overwrite if exists) `'$Command`'"
+
+    $Results = cmd.exe /c $Command 2>&1
     
+    if ($Results -like "SUCCESS*") {
+        Write-Verbose "Create/replace scheduled task completed successfully."
+    }
+    else {
+        $Results
+    }
 }
