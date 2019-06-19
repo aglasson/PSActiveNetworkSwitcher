@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <URI>\WinActiveNetworkSwitcher Event Runner</URI>
+    <URI>\PSActiveNetworkSwitcher Event Runner</URI>
   </RegistrationInfo>
   <Triggers>
     <EventTrigger>
@@ -37,8 +37,8 @@
   <Actions Context="Author">
     <Exec>
       <Command>powershell.exe</Command>
-      <Arguments>-executionpolicy bypass -file "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher\SidelineScripts\TaskRunner.ps1"</Arguments>
-      <WorkingDirectory>C:\Support\ScheduledTasks\WinActiveNetworkSwitcher\SidelineScripts\</WorkingDirectory>
+      <Arguments>-executionpolicy bypass -file "C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\SidelineScripts\TaskRunner.ps1"</Arguments>
+      <WorkingDirectory>C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\SidelineScripts\</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>
