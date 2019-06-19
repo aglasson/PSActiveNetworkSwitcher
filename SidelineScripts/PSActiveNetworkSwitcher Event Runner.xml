@@ -37,8 +37,8 @@
   <Actions Context="Author">
     <Exec>
       <Command>powershell.exe</Command>
-      <Arguments>-executionpolicy bypass -file "C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\SidelineScripts\TaskRunner.ps1"</Arguments>
-      <WorkingDirectory>C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\SidelineScripts\</WorkingDirectory>
+      <Arguments>-executionpolicy bypass -file "C:\Program Files\WindowsPowerShell\Modules\PSActiveNetworkSwitcher\SidelineScripts\TaskRunner.ps1"</Arguments>
+      <WorkingDirectory>C:\Program Files\WindowsPowerShell\Modules\PSActiveNetworkSwitcher\SidelineScripts\</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>
