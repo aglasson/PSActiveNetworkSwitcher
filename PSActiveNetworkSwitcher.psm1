@@ -141,13 +141,13 @@ function Install-PSActiveNetwork {
 
     # Create/replace scheduled task.
     $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
-    Write-Log "Running create scheduled task (overwrite if exists) `'$Command`'"
+    Write-Log "INSTALL: Running create scheduled task (overwrite if exists) `'$Command`'"
 
     $CmdRun = "cmd.exe /c $Command 2>&1"
     $Results = Invoke-Expression -Command $CmdRun
 
     if ($Results -like "SUCCESS*") {
-        Write-Log "Create/replace scheduled task completed successfully."
+        Write-Log "INSTALL: Create/replace scheduled task completed successfully."
     } else {
         $Results
     }
@@ -155,12 +155,12 @@ function Install-PSActiveNetwork {
     # Check for excess counts of scheduled tasks.
     $RelatedSchedTasks = Get-ScheduledTask *networkswitcher*
     if (($RelatedSchedTasks | Measure-Object).Count -gt 1) {
-        Write-Warning "Found more than one scheduled tasks matching '*networkswitcher*'."
+        Write-Warning "INSTALL: Found more than one scheduled tasks matching '*networkswitcher*'."
         Write-Log "INSTALL: WARNING: Found more than one scheduled tasks matching '*networkswitcher*'." -NoVerbose
-        Write-Verbose "These scheduled tasks from {Get-ScheduledTask *networkswitcher*} have been found: $($RelatedSchedTasks | Select-Object TaskName | Out-String)"
+        Write-Verbose "INSTALL: These scheduled tasks from {Get-ScheduledTask *networkswitcher*} have been found: $($RelatedSchedTasks | Select-Object TaskName | Out-String)"
     }
     $TimeSpan = "{0:g}" -f (New-TimeSpan -Start $PerfMetricsStart -End (Get-Date))
-    Write-Log "Install PSActiveNetworkSwitcher time to run: $TimeSpan"
+    Write-Log "INSTALL: PSActiveNetworkSwitcher install time to run: $TimeSpan"
 }
 
 #---- Logging/Output Functions ----#
