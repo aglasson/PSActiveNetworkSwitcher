@@ -15,14 +15,14 @@ Facilitating cleaner network switching when roaming between Ethernet and WiFi, o
 * Copy contents of Master Branch to a desired local directory or a Powershell Module Path directory (`$ENV:PSModulePath`)
 * Import the module:
   ```powershell
-  PS> Import-Module -Name C:\MyDesired\LocalDirectory\WinActiveNetworkSwitcher\Module\WinActiveNetworkSwitcher.psd1 # Unless placed in a PSModulePath directory.
+  PS> Import-Module -Name C:\MyDesired\LocalDirectory\PSActiveNetworkSwitcher\Module\PSActiveNetworkSwitcher.psd1 # Unless placed in a PSModulePath directory.
   PS> Import-Module -Name WinActiveNetworkSwitcher # If already in PSModulePath. New Powershell session after copy.
   ```
 
 ## Example Usage
 #### Install Scheduled Task
 ```powershell
-PS> Install-WinActiveNetwork -Path 'C:\MyDesired\LocalDirectory\WinActiveNetworkSwitcher' # For now this will only copy to 'C:\Support\ScheduledTasks\WinActiveNetworkSwitcher\'
+PS> Install-WinActiveNetwork -Path 'C:\MyDesired\LocalDirectory\PSActiveNetworkSwitcher' # For now this will only copy to 'C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\'
 ```
 #### Running the Network Switcher
 This *without arguments* is run by the scheduled task.

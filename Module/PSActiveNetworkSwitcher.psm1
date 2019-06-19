@@ -111,7 +111,7 @@ function Install-WinActiveNetwork {
         [Parameter( Mandatory = $false,
                     HelpMessage = "Path to a single location for scheduled task to run script.")]
         [string]
-        $Destination = "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher"
+        $Destination = "C:\Support\ScheduledTasks\PSActiveNetworkSwitcher"
         # TODO:
         # ^ This is currently the only supported destination within the Task Scheduler config that gets imported.
     )
@@ -123,12 +123,14 @@ function Install-WinActiveNetwork {
     Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force
 
     # Create/replace scheduled task.
-    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\WinActiveNetworkSwitcher Event Runner.xml')`" /tn `"WinActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
+    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
     Write-Verbose "Running create scheduled task (overwrite if exists) `'$Command`'"
 
-    $Results = cmd.exe /c $Command 2>&1
+    $CmdRun = "cmd.exe /c $Command 2>&1"
+    $Results = Invoke-Expression -Command $CmdRun
 
     if ($Results -like "SUCCESS*") {
+        Write-Host $Results
         Write-Verbose "Create/replace scheduled task completed successfully."
     } else {
         $Results
@@ -156,7 +158,7 @@ Function Write-Log {
         # if either LogPath or LogFileBase come in empty determine values from current location and script name.
         if (!$LogPath) {
             # $LogPath = "$(Split-Path $PSCommandPath -Parent)\Logs\"
-            $LogPath = "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher\Logs\"
+            $LogPath = "C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\Logs\"
         }
         if (!$LogFileBase) {
             $LogFileBase = (Get-ChildItem $PSCommandPath).BaseName
