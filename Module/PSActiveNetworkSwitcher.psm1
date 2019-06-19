@@ -14,13 +14,13 @@
 .OUTPUTS
     None
 .NOTES
-    GitHub Source: https://github.com/aglasson/WinActiveNetworkSwitcher
+    GitHub Source: https://github.com/aglasson/PSActiveNetworkSwitcher
     This script uses an Apache License 2.0 permitting commercial use, modification and distribution.
 #>
 
 #---- General Functions ----#
 
-function Switch-WinActiveNetwork {
+function Switch-PSActiveNetwork {
     [CmdletBinding()]
     Param(
         # If true will instead of selecting ethernet with lowest interface number allow multiple enabled.
@@ -28,7 +28,7 @@ function Switch-WinActiveNetwork {
         [switch]
         $AllowMultiEth
     )
-    Write-Log "Running 'Switch-WinActiveNetwork'"
+    Write-Log "Running 'Switch-PSActiveNetwork'"
     # Simple logic: IF ethernet connected THEN switch off wireless ELSE switch on wireless.
     # IF multiple, select the ethernet with lowest interface number.
 
@@ -97,7 +97,7 @@ function Switch-WinActiveNetwork {
 }
 
 #---- Deploy Functions ----#
-function Install-WinActiveNetwork {
+function Install-PSActiveNetwork {
     [CmdletBinding()]
     param (
         # The path to the module files that will be copied to the task schedule runner location

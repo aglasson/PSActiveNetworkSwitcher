@@ -1,5 +1,5 @@
-# WinActiveNetworkSwitcher 
-https://github.com/aglasson/WinActiveNetworkSwitcher
+# PSActiveNetworkSwitcher 
+https://github.com/aglasson/PSActiveNetworkSwitcher
 
 Powershell Module to automate the switching of network connection states by having certain adapters disabled when other adapters are connected.  
 Can be used in automation or deployed to devices running Windows 8 or later. This module will not work Windows 7 or Earlier (regardless of PS version) due to Get-NetAdapter limitations.  
@@ -16,18 +16,18 @@ Facilitating cleaner network switching when roaming between Ethernet and WiFi, o
 * Import the module:
   ```powershell
   PS> Import-Module -Name C:\MyDesired\LocalDirectory\PSActiveNetworkSwitcher\Module\PSActiveNetworkSwitcher.psd1 # Unless placed in a PSModulePath directory.
-  PS> Import-Module -Name WinActiveNetworkSwitcher # If already in PSModulePath. New Powershell session after copy.
+  PS> Import-Module -Name PSActiveNetworkSwitcher # If already in PSModulePath. New Powershell session after copy.
   ```
 
 ## Example Usage
 #### Install Scheduled Task
 ```powershell
-PS> Install-WinActiveNetwork -Path 'C:\MyDesired\LocalDirectory\PSActiveNetworkSwitcher' # For now this will only copy to 'C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\'
+PS> Install-PSActiveNetwork -Path 'C:\MyDesired\LocalDirectory\PSActiveNetworkSwitcher' # For now this will only copy to 'C:\Support\ScheduledTasks\PSActiveNetworkSwitcher\'
 ```
 #### Running the Network Switcher
 This *without arguments* is run by the scheduled task.
 ```
-PS> Switch-WinActiveNetwork
+PS> Switch-PSActiveNetwork
 ```
 ##### Arguments
 `-AllowMultiEth` If specified will allow Multiple Ethernet Adapters in 'Up' state at the same time. See Logic.
@@ -46,5 +46,5 @@ Order of priority in which if one is in the 'Up' state the others can not be. Wh
 * Mac OSX and Linux Support - **May not be possible and needs investigation**
 
 #### Minor Features
-* Support alternate destinations in 'Install-WinActiveNetwork' and replacement of path in task schedule XML file
+* Support alternate destinations in 'Install-PSActiveNetwork' and replacement of path in task schedule XML file
 * Respond appropriately to Airplane mode
