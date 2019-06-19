@@ -14,13 +14,13 @@
 .OUTPUTS
     None
 .NOTES
-    GitHub Source: https://github.com/aglasson/WinActiveNetworkSwitcher
+    GitHub Source: https://github.com/aglasson/PSActiveNetworkSwitcher
     This script uses an Apache License 2.0 permitting commercial use, modification and distribution.
 #>
 
 #---- General Functions ----#
 
-function Switch-WinActiveNetwork {
+function Switch-PSActiveNetwork {
     [CmdletBinding()]
     Param(
         # If true will instead of selecting ethernet with lowest interface number allow multiple enabled.
@@ -28,7 +28,7 @@ function Switch-WinActiveNetwork {
         [switch]
         $AllowMultiEth
     )
-    Write-Log "Running 'Switch-WinActiveNetwork'"
+    Write-Log "Running 'Switch-PSActiveNetwork'"
     # Simple logic: IF ethernet connected THEN switch off wireless ELSE switch on wireless.
     # IF multiple, select the ethernet with lowest interface number.
 
@@ -49,8 +49,8 @@ function Switch-WinActiveNetwork {
 
     if (($EthernetAdapterUpList | Measure-Object).Count -eq 1) {
 
-        Write-Verbose "Single 'Up' Ethernet Adapter Detected."
-        Write-Verbose "Disabling wireless net adapters. $($WirelessAdapterList | Out-String)"
+        Write-Log "Single 'Up' Ethernet Adapter Detected."
+        Write-Verbose "Wireless net adapters to be disabled: $($WirelessAdapterList | Out-String)"
         Write-Log "Disabling wireless net adapters."
 
         $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
@@ -97,42 +97,70 @@ function Switch-WinActiveNetwork {
 }
 
 #---- Deploy Functions ----#
-function Install-WinActiveNetwork {
+function Install-PSActiveNetwork {
     [CmdletBinding()]
     param (
         # The path to the module files that will be copied to the task schedule runner location
-        [Parameter( Mandatory = $true,
+        [Parameter( Mandatory = $false,
                     HelpMessage = "to the module files that will be copied to the task schedule runner location.")]
         [Alias("PSPath")]
         [ValidateScript( { Test-Path ((Get-ChildItem -Path $_) | Where-Object { $_.Name -eq "SidelineScripts" }).FullName })]
         [string]
         $Path,
-        # The path to the task schedule runner location
+
+        # The path to the module installation location
         [Parameter( Mandatory = $false,
-                    HelpMessage = "Path to a single location for scheduled task to run script.")]
+                    HelpMessage = "Path to a location for the module to be installed to. By default `'C:\Program Files\WindowsPowerShell\Modules`'.")]
         [string]
-        $Destination = "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher"
+        $Destination = "C:\Program Files\WindowsPowerShell\Modules\PSActiveNetworkSwitcher"
         # TODO:
         # ^ This is currently the only supported destination within the Task Scheduler config that gets imported.
     )
 
-    if (!(Test-Path $Destination)) {
-        New-Item -Path $Destination -ItemType Directory
+    $PerfMetricsStart = Get-Date
+
+    if (!$Path -and ((Split-Path $PSCommandPath) -eq $Destination)) {
+        Write-Log "INSTALL: No path specified but `$PSCommandPath matches `$Destination so skipping module install"
+        $Path = $Destination
+    }
+    elseif ($Path) {
+        Write-Log "INSTALL: Path specified, proceeding with copying module files to '$Destination'"
+
+        if (!(Test-Path $Destination)) {
+            Write-Log "INSTALL: Destination path does not exist, creating dirs: '$Destination'"
+            New-Item -Path $Destination -ItemType Directory | Out-Null
+        }
+    
+        Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force -ErrorAction Stop
+        Write-Log "INSTALL: Module contents copy from source to destination Success."
+    }
+    else {
+        Write-Log "INSTALL: ERROR: No path specified and `$PSCommandPath does NOT match `$Destination so assuming failed intention of installing module."
+        Throw "Path required when intending to install module as well."
     }
 
-    Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force
-
     # Create/replace scheduled task.
-    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\WinActiveNetworkSwitcher Event Runner.xml')`" /tn `"WinActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
-    Write-Verbose "Running create scheduled task (overwrite if exists) `'$Command`'"
+    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
+    Write-Log "INSTALL: Running create scheduled task (overwrite if exists) `'$Command`'"
 
-    $Results = cmd.exe /c $Command 2>&1
+    $CmdRun = "cmd.exe /c $Command 2>&1"
+    $Results = Invoke-Expression -Command $CmdRun
 
     if ($Results -like "SUCCESS*") {
-        Write-Verbose "Create/replace scheduled task completed successfully."
+        Write-Log "INSTALL: Create/replace scheduled task completed successfully."
     } else {
         $Results
     }
+
+    # Check for excess counts of scheduled tasks.
+    $RelatedSchedTasks = Get-ScheduledTask *networkswitcher*
+    if (($RelatedSchedTasks | Measure-Object).Count -gt 1) {
+        Write-Warning "INSTALL: Found more than one scheduled tasks matching '*networkswitcher*'."
+        Write-Log "INSTALL: WARNING: Found more than one scheduled tasks matching '*networkswitcher*'." -NoVerbose
+        Write-Verbose "INSTALL: These scheduled tasks from {Get-ScheduledTask *networkswitcher*} have been found: $($RelatedSchedTasks | Select-Object TaskName | Out-String)"
+    }
+    $TimeSpan = "{0:g}" -f (New-TimeSpan -Start $PerfMetricsStart -End (Get-Date))
+    Write-Log "INSTALL: PSActiveNetworkSwitcher install time to run: $TimeSpan"
 }
 
 #---- Logging/Output Functions ----#
@@ -141,7 +169,7 @@ Function Write-Log {
     Param (
         [Parameter(Mandatory = $True)]
         [string]$LogMessage,
-        [switch]$AddVerbose
+        [switch]$NoVerbose
     )
 
     # Actual function to write append logfile entries
@@ -156,7 +184,7 @@ Function Write-Log {
         # if either LogPath or LogFileBase come in empty determine values from current location and script name.
         if (!$LogPath) {
             # $LogPath = "$(Split-Path $PSCommandPath -Parent)\Logs\"
-            $LogPath = "C:\Support\ScheduledTasks\WinActiveNetworkSwitcher\Logs\"
+            $LogPath = "C:\Temp\PSActiveNetworkSwitcher_Logs\"
         }
         if (!$LogFileBase) {
             $LogFileBase = (Get-ChildItem $PSCommandPath).BaseName
@@ -173,12 +201,15 @@ Function Write-Log {
 
         # If required log path does not exist create it
         if (!(Test-Path $LogPath)) {
-            New-Item $LogPath -ItemType Directory -Force
+            Write-Verbose "Logging directory/s do no exists, creating path: '$LogPath'"
+            New-Item $LogPath -ItemType Directory -Force | Out-Null
         }
 
         # Write line to logfile prepending the line with date and time
         Add-Content -Path $LogFilePath -Value "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ms"): $LogContent"
     }
     Write-LogEntry -LogPath $logPath -LogFileBase $logFileBase -LogContent $LogMessage
-    Write-Verbose -Message $LogMessage
+    if (!$NoVerbose) {
+        Write-Verbose -Message $LogMessage   
+    }
 }
