@@ -128,7 +128,7 @@ function Install-PSActiveNetwork {
 
         if (!(Test-Path $Destination)) {
             Write-Log "INSTALL: Destination path does not exist, creating dirs: '$Destination'"
-            New-Item -Path $Destination -ItemType Directory
+            New-Item -Path $Destination -ItemType Directory | Out-Null
         }
     
         Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force -ErrorAction Stop
