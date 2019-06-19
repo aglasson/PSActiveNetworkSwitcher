@@ -147,7 +147,6 @@ function Install-PSActiveNetwork {
     $Results = Invoke-Expression -Command $CmdRun
 
     if ($Results -like "SUCCESS*") {
-        Write-Host $Results
         Write-Log "Create/replace scheduled task completed successfully."
     } else {
         $Results
