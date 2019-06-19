@@ -1,3 +1,3 @@
-Import-Module (Join-Path (Split-Path $PSScriptRoot -Parent) 'Module\PSActiveNetworkSwitcher.psd1')
+Import-Module PSActiveNetwork
 
 Switch-PSActiveNetwork
