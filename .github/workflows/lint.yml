@@ -1,14 +1,17 @@
 name: CI
 
-on: [push]
+on: [push,pull_request]
 
 jobs:
   lint:
-    name: Module linting
+    name: Module Linting
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v1
-    - name: lint
+    - name: Import PSSA from Powershell Gallery
+      run: Invoke-ScriptAnalyzer -Recurse -Path .\
+      shell: powershell    
+    - name: Lint with PSSA
       run: Invoke-ScriptAnalyzer -Recurse -Path .\
       shell: powershell
