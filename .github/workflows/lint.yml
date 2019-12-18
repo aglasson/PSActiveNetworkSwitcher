@@ -10,5 +10,4 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: lint
-        run: Invoke-ScriptAnalyzer -Recurse -Path .\
-        shell: powershell
+        run: .github\workflows\lint-scripts\pssa.ps1

@@ -1,0 +1,1 @@
+Invoke-ScriptAnalyzer -Recurse -Path '.\'
