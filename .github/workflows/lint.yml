@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Import PSSA from Powershell Gallery
-      run: Invoke-ScriptAnalyzer -Recurse -Path .\
+      run: .github\workflows\scripts\lint-import-pssa.ps1
       shell: powershell    
     - name: Lint with PSSA
       run: Invoke-ScriptAnalyzer -Recurse -Path .\
