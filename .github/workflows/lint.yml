@@ -4,14 +4,10 @@ on: [push,pull_request]
 
 jobs:
   lint:
-    name: Module Linting
-    runs-on: windows-latest
+    name: Module PSSA Linting
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
-    - name: Import PSSA from Powershell Gallery
-      run: .github\workflows\scripts\lint-import-pssa.ps1
-      shell: powershell    
     - name: Lint with PSSA
-      run: Invoke-ScriptAnalyzer -Recurse -Path .\
-      shell: powershell
+      uses: devblackops/github-action-psscriptanalyzer@master
