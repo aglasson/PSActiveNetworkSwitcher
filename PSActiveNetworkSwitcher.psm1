@@ -130,7 +130,7 @@ function Install-PSActiveNetwork {
             Write-Log "INSTALL: Destination path does not exist, creating dirs: '$Destination'"
             New-Item -Path $Destination -ItemType Directory | Out-Null
         }
-    
+
         Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force -ErrorAction Stop
         Write-Log "INSTALL: Module contents copy from source to destination Success."
     }
@@ -144,7 +144,7 @@ function Install-PSActiveNetwork {
     Write-Log "INSTALL: Running create scheduled task (overwrite if exists) `'$Command`'"
 
     $CmdRun = "cmd.exe /c $Command 2>&1"
-    $Results = Invoke-Expression -Command $CmdRun
+    $Results = Invoke-Command -ScriptBlock { $CmdRun }
 
     if ($Results -like "SUCCESS*") {
         Write-Log "INSTALL: Create/replace scheduled task completed successfully."
@@ -193,7 +193,7 @@ Function Write-Log {
         $LogFilePath = (Join-Path -Path $LogPath -ChildPath ($LogFileBase + "_" + $(Get-Date -Format "yyyy-MM-dd") + ".log"))
 
         if (!$VerboseOnce) {
-            $Global:VerboseOnce = $True
+            $Script:VerboseOnce = $True
             Write-Verbose "LogPath determined as `'$LogPath`'"
             Write-Verbose "LogFileBase determined as `'$LogFileBase`'"
             Write-Verbose "LogFile determined as `'$LogFilePath`'"
@@ -210,6 +210,6 @@ Function Write-Log {
     }
     Write-LogEntry -LogPath $logPath -LogFileBase $logFileBase -LogContent $LogMessage
     if (!$NoVerbose) {
-        Write-Verbose -Message $LogMessage   
+        Write-Verbose -Message $LogMessage
     }
 }
