@@ -4,12 +4,11 @@ on: [push]
 
 jobs:
   lint:
-    name: Run PSSA
+    name: Module linting
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v1
     - name: lint
-      uses: devblackops/github-action-psscriptanalyzer@master
-      with:
-        sendComment: true
+        run: Invoke-ScriptAnalyzer -Recurse -Path .\
+        shell: powershell
