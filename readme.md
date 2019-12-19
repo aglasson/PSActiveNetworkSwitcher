@@ -7,7 +7,8 @@ Facilitating cleaner network switching when roaming between Ethernet and WiFi, o
 
 ## Features
 * Enable/disable wireless & other ethernet based on ethernet adapter state
-* Allow or deny multiple ethernet adapter being enable/connected at once
+* Allow or deny multiple ethernet adapter being enabled/connected at once
+* Safe handling with Airplane mode turned on - Take no switching action
 * Self deploy script runner and scheduled tasks to monitor event log for network changes and re-run the switcher
 
 ## Installation
@@ -36,6 +37,7 @@ Order of priority in which if one is in the 'Up' state the others can not be. Wh
 1. Ethernet
 2. Wireless LAN (WiFi)
 3. Wireless WAN (Mobile Broadband/Cellular)
+Note: If Airplane Mode is enable no action is taken.
 
 ## Intended Features
 #### Major Features
@@ -46,4 +48,3 @@ Order of priority in which if one is in the 'Up' state the others can not be. Wh
 
 #### Minor Features
 * Support alternate destinations in 'Install-PSActiveNetwork' and replacement of path in task schedule XML file
-* Respond appropriately to Airplane mode

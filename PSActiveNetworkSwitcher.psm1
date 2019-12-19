@@ -34,6 +34,15 @@ function Switch-PSActiveNetwork {
 
     $PerfMetricsStart = Get-Date
 
+    # Get Airplane mode state and stop if active
+    $AirplaneModeState = (Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\RadioManagement\SystemRadioState\).'(default)'
+    Write-Verbose "Airplane mode detected state: $AirplaneModeState"
+
+    if ($AirplaneModeState -eq 1) {
+        Write-Log "Airplane mode enabled, taking no action on adapter switching."
+        Return
+    }
+
     # Get network devices and their states
     $PhysicalAdapterList = Get-NetAdapter -Physical | Where-Object { $_.PhysicalMediaType -ne "Unspecified" } | Select-Object Name, ifIndex, PhysicalMediaType, Status
     Write-Verbose "Output of {Get-NetAdapter -Physical} $($PhysicalAdapterList | Out-String)"
