@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>PSActiveNetworkSwitcher</id>
+    <version>0.1.0</version>
+    <authors>Adrian.Glasson</authors>
+    <owners>Adrian.Glasson</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/aglasson/PSActiveNetworkSwitcher/</projectUrl>
+    <description>PSActiveNetworkSwitcher</description>
+    <releaseNotes>WIP</releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags></tags>
+    <dependencies>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\*.*" target="tools" />
+  </files>
+</package>
