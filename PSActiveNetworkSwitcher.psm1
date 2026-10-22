@@ -20,6 +20,15 @@
 
 #---- General Functions ----#
 
+function Disable-NetworkAdapterByIndex {
+    param([int]$InterfaceIndex)
+    Get-NetAdapter -ifIndex $InterfaceIndex | Disable-NetAdapter -Confirm:$False
+}
+
+function Enable-AllNetworkAdapters {
+    Get-NetAdapter | Enable-NetAdapter -Confirm:$False
+}
+
 function Switch-PSActiveNetwork {
     [CmdletBinding()]
     Param(
@@ -62,21 +71,21 @@ function Switch-PSActiveNetwork {
         Write-Verbose "Wireless net adapters to be disabled: $($WirelessAdapterList | Out-String)"
         Write-Log "Disabling wireless net adapters."
 
-        $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+        $WirelessAdapterList | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
     } elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1)) {
         Write-Log "More than one 'Up' Ethernet Adapter Detected."
 
         if ($AllowMultiEth) {
             Write-Log "-AllowMultiEth `$True so disabling all but Ethernet adapters."
 
-            $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+            $WirelessAdapterList | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
         } else {
             Write-Log "-AllowMultiEth `$False so disabling all Wirless and 'Up' Ethernet except 'Up' Eth with lowest ifIndex number."
 
-            $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+            $WirelessAdapterList | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
             $EthernetMultiLowest = ($EthernetAdapterUpList | Measure-Object -Minimum -Property ifIndex).Minimum
             Write-Verbose "'Up' Eth with lowest ifIndex number $($EthernetAdapterUpList | Where-Object {$_.ifIndex -ne $EthernetMultiLowest})"
-            $EthernetAdapterUpList | Where-Object { $_.ifIndex -ne $EthernetMultiLowest } | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+            $EthernetAdapterUpList | Where-Object { $_.ifIndex -ne $EthernetMultiLowest } | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
         }
         Write-Log "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
     } elseif (((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) -and (($WirelessAdapterUpList | Measure-Object).Count -gt 0)) {
@@ -87,11 +96,11 @@ function Switch-PSActiveNetwork {
 
             if ((($WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Native 802.11" } | Measure-Object).Count) -eq 1) {
                 Write-Log "Only 1 'up' Wireless LAN adapters identified so disabling Wireless WAN adapters only."
-                $WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Wireless WAN" } | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+                $WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Wireless WAN" } | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
             } else {
                 Write-Log "More than 1 'up' Wireless LAN adapters identified so disabling Wireless WAN and Wireless LAN except with lowest ifIndex number."
                 $WirelessLANMultiLowest = ($WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Native 802.11" } | Measure-Object -Minimum -Property ifIndex).Minimum
-                $WirelessAdapterUpList | Where-Object { $_.ifIndex -ne $WirelessLANMultiLowest } | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+                $WirelessAdapterUpList | Where-Object { $_.ifIndex -ne $WirelessLANMultiLowest } | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
             }
         } else {
             Write-Log "Only one 'up' wireless adapter identified, no action required."
@@ -99,7 +108,7 @@ function Switch-PSActiveNetwork {
     } else {
         Write-Log "Criteria not met, enabling all net adapters."
 
-        Get-NetAdapter | Enable-NetAdapter -Confirm:$False
+        Enable-AllNetworkAdapters
     }
     $TimeSpan = "{0:g}" -f (New-TimeSpan -Start $PerfMetricsStart -End (Get-Date))
     Write-Log "Switch network time to run: $TimeSpan"
