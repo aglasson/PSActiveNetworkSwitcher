@@ -1,4 +1,4 @@
-# PSActiveNetworkSwitcher 
+# PSActiveNetworkSwitcher
 
 [https://github.com/aglasson/PSActiveNetworkSwitcher]
 
