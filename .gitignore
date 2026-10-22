@@ -1,0 +1,7 @@
+# Pester output
+/testResults.xml
+/TestResults/
+/coverage.xml
+
+# PowerShell module packages
+*.nupkg

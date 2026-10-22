@@ -20,6 +20,15 @@
 
 #---- General Functions ----#
 
+function Disable-NetworkAdapterByIndex {
+    param([int]$InterfaceIndex)
+    Get-NetAdapter -ifIndex $InterfaceIndex | Disable-NetAdapter -Confirm:$False
+}
+
+function Enable-AllNetworkAdapter {
+    Get-NetAdapter | Enable-NetAdapter -Confirm:$False
+}
+
 function Switch-PSActiveNetwork {
     [CmdletBinding()]
     Param(
@@ -28,7 +37,7 @@ function Switch-PSActiveNetwork {
         [switch]
         $AllowMultiEth
     )
-    Write-Log "Running 'Switch-PSActiveNetwork'"
+    Write-PSActiveNetworkLog "Running 'Switch-PSActiveNetwork'"
     # Simple logic: IF ethernet connected THEN switch off wireless ELSE switch on wireless.
     # IF multiple, select the ethernet with lowest interface number.
 
@@ -39,7 +48,7 @@ function Switch-PSActiveNetwork {
     Write-Verbose "Airplane mode detected state: $AirplaneModeState"
 
     if ($AirplaneModeState -eq 1) {
-        Write-Log "Airplane mode enabled, taking no action on adapter switching."
+        Write-PSActiveNetworkLog "Airplane mode enabled, taking no action on adapter switching."
         Return
     }
 
@@ -58,27 +67,27 @@ function Switch-PSActiveNetwork {
 
     if (($EthernetAdapterUpList | Measure-Object).Count -eq 1) {
 
-        Write-Log "Single 'Up' Ethernet Adapter Detected."
+        Write-PSActiveNetworkLog "Single 'Up' Ethernet Adapter Detected."
         Write-Verbose "Wireless net adapters to be disabled: $($WirelessAdapterList | Out-String)"
-        Write-Log "Disabling wireless net adapters."
+        Write-PSActiveNetworkLog "Disabling wireless net adapters."
 
-        $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+        $WirelessAdapterList | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
     } elseif (((($EthernetAdapterUpList | Measure-Object).Count) -gt 1)) {
-        Write-Log "More than one 'Up' Ethernet Adapter Detected."
+        Write-PSActiveNetworkLog "More than one 'Up' Ethernet Adapter Detected."
 
         if ($AllowMultiEth) {
-            Write-Log "-AllowMultiEth `$True so disabling all but Ethernet adapters."
+            Write-PSActiveNetworkLog "-AllowMultiEth `$True so disabling all but Ethernet adapters."
 
-            $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+            $WirelessAdapterList | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
         } else {
-            Write-Log "-AllowMultiEth `$False so disabling all Wirless and 'Up' Ethernet except 'Up' Eth with lowest ifIndex number."
+            Write-PSActiveNetworkLog "-AllowMultiEth `$False so disabling all Wirless and 'Up' Ethernet except 'Up' Eth with lowest ifIndex number."
 
-            $WirelessAdapterList | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+            $WirelessAdapterList | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
             $EthernetMultiLowest = ($EthernetAdapterUpList | Measure-Object -Minimum -Property ifIndex).Minimum
             Write-Verbose "'Up' Eth with lowest ifIndex number $($EthernetAdapterUpList | Where-Object {$_.ifIndex -ne $EthernetMultiLowest})"
-            $EthernetAdapterUpList | Where-Object { $_.ifIndex -ne $EthernetMultiLowest } | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+            $EthernetAdapterUpList | Where-Object { $_.ifIndex -ne $EthernetMultiLowest } | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
         }
-        Write-Log "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
+        Write-PSActiveNetworkLog "Multiple up ethernet adapters identified and -AllowMultiEth `$True, enabling wireless net adapters."
     } elseif (((($EthernetAdapterUpList | Measure-Object).Count) -eq 0) -and (($WirelessAdapterUpList | Measure-Object).Count -gt 0)) {
 
         Write-Verbose "No 'up' ethernet adapters identified, at least one 'up' wireless adapter."
@@ -86,23 +95,23 @@ function Switch-PSActiveNetwork {
         if ((($WirelessAdapterUpList | Measure-Object).Count) -ge 2) {
 
             if ((($WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Native 802.11" } | Measure-Object).Count) -eq 1) {
-                Write-Log "Only 1 'up' Wireless LAN adapters identified so disabling Wireless WAN adapters only."
-                $WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Wireless WAN" } | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+                Write-PSActiveNetworkLog "Only 1 'up' Wireless LAN adapters identified so disabling Wireless WAN adapters only."
+                $WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Wireless WAN" } | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
             } else {
-                Write-Log "More than 1 'up' Wireless LAN adapters identified so disabling Wireless WAN and Wireless LAN except with lowest ifIndex number."
+                Write-PSActiveNetworkLog "More than 1 'up' Wireless LAN adapters identified so disabling Wireless WAN and Wireless LAN except with lowest ifIndex number."
                 $WirelessLANMultiLowest = ($WirelessAdapterUpList | Where-Object { $_.PhysicalMediaType -eq "Native 802.11" } | Measure-Object -Minimum -Property ifIndex).Minimum
-                $WirelessAdapterUpList | Where-Object { $_.ifIndex -ne $WirelessLANMultiLowest } | ForEach-Object { Get-NetAdapter -ifIndex $_.ifIndex | Disable-NetAdapter -Confirm:$False }
+                $WirelessAdapterUpList | Where-Object { $_.ifIndex -ne $WirelessLANMultiLowest } | ForEach-Object { Disable-NetworkAdapterByIndex -InterfaceIndex $_.ifIndex }
             }
         } else {
-            Write-Log "Only one 'up' wireless adapter identified, no action required."
+            Write-PSActiveNetworkLog "Only one 'up' wireless adapter identified, no action required."
         }
     } else {
-        Write-Log "Criteria not met, enabling all net adapters."
+        Write-PSActiveNetworkLog "Criteria not met, enabling all net adapters."
 
-        Get-NetAdapter | Enable-NetAdapter -Confirm:$False
+        Enable-AllNetworkAdapter
     }
     $TimeSpan = "{0:g}" -f (New-TimeSpan -Start $PerfMetricsStart -End (Get-Date))
-    Write-Log "Switch network time to run: $TimeSpan"
+    Write-PSActiveNetworkLog "Switch network time to run: $TimeSpan"
 }
 
 #---- Deploy Functions ----#
@@ -113,7 +122,7 @@ function Install-PSActiveNetwork {
         [Parameter( Mandatory = $false,
                     HelpMessage = "to the module files that will be copied to the task schedule runner location.")]
         [Alias("PSPath")]
-        [ValidateScript( { Test-Path ((Get-ChildItem -Path $_) | Where-Object { $_.Name -eq "SidelineScripts" }).FullName })]
+        [ValidateScript( { Test-Path (Join-Path $_ "ScheduledTask") })]
         [string]
         $Path,
 
@@ -129,34 +138,34 @@ function Install-PSActiveNetwork {
     $PerfMetricsStart = Get-Date
 
     if (!$Path -and ((Split-Path $PSCommandPath) -eq $Destination)) {
-        Write-Log "INSTALL: No path specified but `$PSCommandPath matches `$Destination so skipping module install"
+        Write-PSActiveNetworkLog "INSTALL: No path specified but `$PSCommandPath matches `$Destination so skipping module install"
         $Path = $Destination
     }
     elseif ($Path) {
-        Write-Log "INSTALL: Path specified, proceeding with copying module files to '$Destination'"
+        Write-PSActiveNetworkLog "INSTALL: Path specified, proceeding with copying module files to '$Destination'"
 
         if (!(Test-Path $Destination)) {
-            Write-Log "INSTALL: Destination path does not exist, creating dirs: '$Destination'"
+            Write-PSActiveNetworkLog "INSTALL: Destination path does not exist, creating dirs: '$Destination'"
             New-Item -Path $Destination -ItemType Directory | Out-Null
         }
 
         Get-ChildItem -Path $Path -Exclude ".git" | Copy-Item -Destination $Destination -Recurse -Force -ErrorAction Stop
-        Write-Log "INSTALL: Module contents copy from source to destination Success."
+        Write-PSActiveNetworkLog "INSTALL: Module contents copy from source to destination Success."
     }
     else {
-        Write-Log "INSTALL: ERROR: No path specified and `$PSCommandPath does NOT match `$Destination so assuming failed intention of installing module."
+        Write-PSActiveNetworkLog "INSTALL: ERROR: No path specified and `$PSCommandPath does NOT match `$Destination so assuming failed intention of installing module."
         Throw "Path required when intending to install module as well."
     }
 
     # Create/replace scheduled task.
-    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
-    Write-Log "INSTALL: Running create scheduled task (overwrite if exists) `'$Command`'"
+    $Command = "schtasks /create /xml `"$(Join-Path $Path 'ScheduledTask\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
+    Write-PSActiveNetworkLog "INSTALL: Running create scheduled task (overwrite if exists) `'$Command`'"
 
     $CmdRun = "cmd.exe /c $Command 2>&1"
     $Results = Invoke-Command -ScriptBlock { $CmdRun }
 
     if ($Results -like "SUCCESS*") {
-        Write-Log "INSTALL: Create/replace scheduled task completed successfully."
+        Write-PSActiveNetworkLog "INSTALL: Create/replace scheduled task completed successfully."
     } else {
         $Results
     }
@@ -165,16 +174,16 @@ function Install-PSActiveNetwork {
     $RelatedSchedTasks = Get-ScheduledTask *networkswitcher*
     if (($RelatedSchedTasks | Measure-Object).Count -gt 1) {
         Write-Warning "INSTALL: Found more than one scheduled tasks matching '*networkswitcher*'."
-        Write-Log "INSTALL: WARNING: Found more than one scheduled tasks matching '*networkswitcher*'." -NoVerbose
+        Write-PSActiveNetworkLog "INSTALL: WARNING: Found more than one scheduled tasks matching '*networkswitcher*'." -NoVerbose
         Write-Verbose "INSTALL: These scheduled tasks from {Get-ScheduledTask *networkswitcher*} have been found: $($RelatedSchedTasks | Select-Object TaskName | Out-String)"
     }
     $TimeSpan = "{0:g}" -f (New-TimeSpan -Start $PerfMetricsStart -End (Get-Date))
-    Write-Log "INSTALL: PSActiveNetworkSwitcher install time to run: $TimeSpan"
+    Write-PSActiveNetworkLog "INSTALL: PSActiveNetworkSwitcher install time to run: $TimeSpan"
 }
 
 #---- Logging/Output Functions ----#
 
-Function Write-Log {
+Function Write-PSActiveNetworkLog {
     Param (
         [Parameter(Mandatory = $True)]
         [string]$LogMessage,
