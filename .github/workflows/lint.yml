@@ -6,7 +6,7 @@ on: [push, pull_request]
 jobs:
   pester-tests:
     name: Pester unit tests
-    runs-on: ubuntu-26.04
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
