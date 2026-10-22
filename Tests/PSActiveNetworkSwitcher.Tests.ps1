@@ -144,11 +144,12 @@ Describe 'Install-PSActiveNetwork' {
     BeforeEach {
         Mock Write-Log {} -ModuleName PSActiveNetworkSwitcher
         Mock Copy-Item {} -ModuleName PSActiveNetworkSwitcher
+        Mock Get-Item { param($Path) [pscustomobject]@{ FullName = $Path } } -ModuleName PSActiveNetworkSwitcher
         Mock Invoke-Command { 'SUCCESS: The scheduled task was created.' } -ModuleName PSActiveNetworkSwitcher
         Mock Get-ScheduledTask { @() } -ModuleName PSActiveNetworkSwitcher
     }
 
-    It 'rejects a source directory without SidelineScripts' {
+    It 'rejects a source directory without tools' {
         $invalidPath = Join-Path $TestDrive 'invalid'
         New-Item -Path $invalidPath -ItemType Directory -Force | Out-Null
 
@@ -158,12 +159,15 @@ Describe 'Install-PSActiveNetwork' {
     It 'copies module files and creates the scheduled task for a valid source directory' {
         $sourcePath = Join-Path $TestDrive 'source'
         $destinationPath = Join-Path $TestDrive 'destination'
-        New-Item -Path (Join-Path $sourcePath 'SidelineScripts') -ItemType Directory -Force | Out-Null
-        Set-Content -Path (Join-Path $sourcePath 'SidelineScripts\PSActiveNetworkSwitcher Event Runner.xml') -Value '<Task />'
+        $toolsPath = Join-Path $sourcePath 'tools'
+        New-Item -Path $toolsPath -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $toolsPath 'PSActiveNetworkSwitcher Event Runner.xml') -Value '<Task />'
+        Set-Content -Path (Join-Path $toolsPath 'TaskRunner.ps1.rename') -Value 'Switch-PSActiveNetwork'
 
         Install-PSActiveNetwork -Path $sourcePath -Destination $destinationPath
 
-        Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter { $Destination -eq $destinationPath } -ModuleName PSActiveNetworkSwitcher
+        Should -Invoke Copy-Item -Times 2 -Exactly -ModuleName PSActiveNetworkSwitcher
+        Should -Invoke Get-Item -Times 1 -Exactly -ParameterFilter { $Path -eq (Join-Path $toolsPath 'TaskRunner.ps1.rename') } -ModuleName PSActiveNetworkSwitcher
         Should -Invoke Invoke-Command -Times 1 -Exactly -ModuleName PSActiveNetworkSwitcher
         Should -Invoke Get-ScheduledTask -Times 1 -Exactly -ModuleName PSActiveNetworkSwitcher
     }

@@ -149,8 +149,8 @@ function Install-PSActiveNetwork {
             New-Item -Path $Destination -ItemType Directory | Out-Null
         }
 
-        Get-ChildItem -Path $Path -Exclude ".git",".rename" | Copy-Item -Destination $Destination -Recurse -Force -ErrorAction Stop
-        Get-Item -Path "tools\TaskRunner.ps1.rename" | Copy-Item -Destination (Join-Path $Destination "TaskRunner.ps1") -Recurse -Force -ErrorAction Stop
+        Get-ChildItem -Path $Path -Exclude ".git","*.rename" | Copy-Item -Destination $Destination -Recurse -Force -ErrorAction Stop
+        Get-Item -Path (Join-Path $Path "tools\TaskRunner.ps1.rename") | Copy-Item -Destination (Join-Path $Destination "TaskRunner.ps1") -Recurse -Force -ErrorAction Stop
         Write-Log "INSTALL: Module contents copy from source to destination Success."
     }
     else {
