@@ -122,7 +122,7 @@ function Install-PSActiveNetwork {
         [Parameter( Mandatory = $false,
                     HelpMessage = "to the module files that will be copied to the task schedule runner location.")]
         [Alias("PSPath")]
-        [ValidateScript( { Test-Path ((Get-ChildItem -Path $_) | Where-Object { $_.Name -eq "SidelineScripts" }).FullName })]
+        [ValidateScript( { Test-Path (Join-Path $_ "ScheduledTask") })]
         [string]
         $Path,
 
@@ -158,7 +158,7 @@ function Install-PSActiveNetwork {
     }
 
     # Create/replace scheduled task.
-    $Command = "schtasks /create /xml `"$(Join-Path $Path 'SidelineScripts\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
+    $Command = "schtasks /create /xml `"$(Join-Path $Path 'ScheduledTask\PSActiveNetworkSwitcher Event Runner.xml')`" /tn `"PSActiveNetworkSwitcher Event Runner`" /ru SYSTEM /F"
     Write-PSActiveNetworkLog "INSTALL: Running create scheduled task (overwrite if exists) `'$Command`'"
 
     $CmdRun = "cmd.exe /c $Command 2>&1"
