@@ -13,13 +13,13 @@ BeforeAll {
 
 Describe 'Switch-PSActiveNetwork' {
     BeforeEach {
-        Mock Write-Log {} -ModuleName PSActiveNetworkSwitcher
+        Mock Write-PSActiveNetworkLog {} -ModuleName PSActiveNetworkSwitcher
         Mock Get-ItemProperty { [pscustomobject]@{ '(default)' = 0 } } -ModuleName PSActiveNetworkSwitcher
-        Mock Get-NetAdapter { param($Physical, $ifIndex) @() } -ModuleName PSActiveNetworkSwitcher
-        Mock Disable-NetworkAdapterByIndex { param($InterfaceIndex) $global:DisabledAdapterIndexes += $InterfaceIndex } -ModuleName PSActiveNetworkSwitcher
-        Mock Enable-AllNetworkAdapters { $global:EnabledAdapterCalls++ } -ModuleName PSActiveNetworkSwitcher
-        $global:DisabledAdapterIndexes = @()
-        $global:EnabledAdapterCalls = 0
+        Mock Get-NetAdapter { @() } -ModuleName PSActiveNetworkSwitcher
+        Mock Disable-NetworkAdapterByIndex { param($InterfaceIndex) $script:DisabledAdapterIndexes += $InterfaceIndex } -ModuleName PSActiveNetworkSwitcher
+        Mock Enable-AllNetworkAdapter { $script:EnabledAdapterCalls++ } -ModuleName PSActiveNetworkSwitcher
+        $script:DisabledAdapterIndexes = @()
+        $script:EnabledAdapterCalls = 0
     }
 
     It 'does not inspect or change adapters when airplane mode is enabled' {
@@ -28,13 +28,14 @@ Describe 'Switch-PSActiveNetwork' {
         Switch-PSActiveNetwork
 
         Should -Invoke Get-NetAdapter -Times 0 -Exactly -ModuleName PSActiveNetworkSwitcher
-        $global:DisabledAdapterIndexes | Should -BeNullOrEmpty
-        $global:EnabledAdapterCalls | Should -Be 0
+        $script:DisabledAdapterIndexes | Should -BeNullOrEmpty
+        $script:EnabledAdapterCalls | Should -Be 0
     }
 
     It 'disables all wireless adapters when one ethernet adapter is up' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @(
                 [pscustomobject]@{ Name = 'Ethernet'; ifIndex = 10; PhysicalMediaType = '802.3'; Status = 'Up' }
                 [pscustomobject]@{ Name = 'Wi-Fi'; ifIndex = 20; PhysicalMediaType = 'Native 802.11'; Status = 'Up' }
@@ -45,13 +46,14 @@ Describe 'Switch-PSActiveNetwork' {
 
         Switch-PSActiveNetwork
 
-        $global:DisabledAdapterIndexes | Should -Contain 20
-        $global:DisabledAdapterIndexes | Should -Contain 30
+        $script:DisabledAdapterIndexes | Should -Contain 20
+        $script:DisabledAdapterIndexes | Should -Contain 30
     }
 
     It 'keeps the lowest-index ethernet and disables wireless by default when multiple ethernet adapters are up' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @(
                 [pscustomobject]@{ Name = 'Ethernet A'; ifIndex = 10; PhysicalMediaType = '802.3'; Status = 'Up' }
                 [pscustomobject]@{ Name = 'Ethernet B'; ifIndex = 5; PhysicalMediaType = '802.3'; Status = 'Up' }
@@ -62,13 +64,14 @@ Describe 'Switch-PSActiveNetwork' {
 
         Switch-PSActiveNetwork
 
-        $global:DisabledAdapterIndexes | Should -Contain 10
-        $global:DisabledAdapterIndexes | Should -Contain 20
+        $script:DisabledAdapterIndexes | Should -Contain 10
+        $script:DisabledAdapterIndexes | Should -Contain 20
     }
 
     It 'allows multiple ethernet adapters but still disables wireless when AllowMultiEth is set' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @(
                 [pscustomobject]@{ Name = 'Ethernet A'; ifIndex = 10; PhysicalMediaType = '802.3'; Status = 'Up' }
                 [pscustomobject]@{ Name = 'Ethernet B'; ifIndex = 5; PhysicalMediaType = '802.3'; Status = 'Up' }
@@ -79,12 +82,13 @@ Describe 'Switch-PSActiveNetwork' {
 
         Switch-PSActiveNetwork -AllowMultiEth
 
-        $global:DisabledAdapterIndexes | Should -Contain 20
+        $script:DisabledAdapterIndexes | Should -Contain 20
     }
 
     It 'keeps the only active WLAN and disables other active wireless adapters when no ethernet is up' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @(
                 [pscustomobject]@{ Name = 'Wi-Fi'; ifIndex = 20; PhysicalMediaType = 'Native 802.11'; Status = 'Up' }
                 [pscustomobject]@{ Name = 'Cellular'; ifIndex = 30; PhysicalMediaType = 'Wireless WAN'; Status = 'Up' }
@@ -94,12 +98,13 @@ Describe 'Switch-PSActiveNetwork' {
 
         Switch-PSActiveNetwork
 
-        $global:DisabledAdapterIndexes | Should -Contain 30
+        $script:DisabledAdapterIndexes | Should -Contain 30
     }
 
     It 'keeps the lowest-index WLAN when multiple WLAN adapters are active' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @(
                 [pscustomobject]@{ Name = 'Wi-Fi A'; ifIndex = 20; PhysicalMediaType = 'Native 802.11'; Status = 'Up' }
                 [pscustomobject]@{ Name = 'Wi-Fi B'; ifIndex = 10; PhysicalMediaType = 'Native 802.11'; Status = 'Up' }
@@ -110,39 +115,41 @@ Describe 'Switch-PSActiveNetwork' {
 
         Switch-PSActiveNetwork
 
-        $global:DisabledAdapterIndexes | Should -Contain 20
-        $global:DisabledAdapterIndexes | Should -Contain 30
+        $script:DisabledAdapterIndexes | Should -Contain 20
+        $script:DisabledAdapterIndexes | Should -Contain 30
     }
 
     It 'takes no action when one wireless adapter is already up' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @([pscustomobject]@{ Name = 'Wi-Fi'; ifIndex = 20; PhysicalMediaType = 'Native 802.11'; Status = 'Up' })
             if ($ifIndex) { $adapters | Where-Object { $_.ifIndex -eq $ifIndex } } else { $adapters }
         } -ModuleName PSActiveNetworkSwitcher
 
         Switch-PSActiveNetwork
 
-        $global:DisabledAdapterIndexes | Should -BeNullOrEmpty
-        $global:EnabledAdapterCalls | Should -Be 0
+        $script:DisabledAdapterIndexes | Should -BeNullOrEmpty
+        $script:EnabledAdapterCalls | Should -Be 0
     }
 
     It 'enables all adapters when neither ethernet nor wireless is up' {
         Mock Get-NetAdapter {
             param($Physical, $ifIndex)
+            $null = $Physical
             $adapters = @([pscustomobject]@{ Name = 'Ethernet'; ifIndex = 10; PhysicalMediaType = '802.3'; Status = 'Disconnected' })
             if ($ifIndex) { $adapters | Where-Object { $_.ifIndex -eq $ifIndex } } else { $adapters }
         } -ModuleName PSActiveNetworkSwitcher
 
         Switch-PSActiveNetwork
 
-        $global:EnabledAdapterCalls | Should -Be 1
+        $script:EnabledAdapterCalls | Should -Be 1
     }
 }
 
 Describe 'Install-PSActiveNetwork' {
     BeforeEach {
-        Mock Write-Log {} -ModuleName PSActiveNetworkSwitcher
+        Mock Write-PSActiveNetworkLog {} -ModuleName PSActiveNetworkSwitcher
         Mock Copy-Item {} -ModuleName PSActiveNetworkSwitcher
         Mock Invoke-Command { 'SUCCESS: The scheduled task was created.' } -ModuleName PSActiveNetworkSwitcher
         Mock Get-ScheduledTask { @() } -ModuleName PSActiveNetworkSwitcher
@@ -171,5 +178,5 @@ Describe 'Install-PSActiveNetwork' {
 
 AfterAll {
     Remove-Module PSActiveNetworkSwitcher -Force -ErrorAction SilentlyContinue
-    Remove-Variable DisabledAdapterIndexes, EnabledAdapterCalls -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable DisabledAdapterIndexes, EnabledAdapterCalls -Scope Script -ErrorAction SilentlyContinue
 }
