@@ -1,6 +1,14 @@
 BeforeAll {
     $modulePath = Join-Path $PSScriptRoot '..\PSActiveNetworkSwitcher.psm1'
     Import-Module $modulePath -Force
+
+    InModuleScope PSActiveNetworkSwitcher {
+        foreach ($commandName in 'Get-NetAdapter', 'Get-ScheduledTask') {
+            if (-not (Get-Command $commandName -ErrorAction SilentlyContinue)) {
+                Set-Item -Path "Function:\$commandName" -Value { }
+            }
+        }
+    }
 }
 
 Describe 'Switch-PSActiveNetwork' {
